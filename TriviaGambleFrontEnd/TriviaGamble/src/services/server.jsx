@@ -9,3 +9,18 @@ export async function getAnswer(answer) {
     setTimeout(1000)
     return resp
 }
+
+export async function postQuestion(question) {
+    const resp = await ourServer.post('question', {
+        q: question
+    })
+    // setTimeout(1000)
+    return resp.data.q
+}
+
+export async function postBackEndDBUpdate(value) {
+    const resp = await ourServer.post('backend', {
+        val: value
+    })
+    console.log(resp.status)
+}
