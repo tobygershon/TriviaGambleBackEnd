@@ -4,7 +4,7 @@ class Answer:
 
     def __init__(self, answer):
         self.answer = answer
-        self.is_correct = False
+        self.status = 'PENDING'
 
     def is_answer_correct(self):
         completion = c.ChatQuery()

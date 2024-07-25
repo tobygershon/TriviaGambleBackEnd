@@ -5,10 +5,10 @@ import player
 
 class Round:
 
-    def __init__(self, number, high_bet, player):
-        self.number = number
-        self.high_bet = high_bet
-        self.player = player
-        self.answers_dict = {}
+    def __init__(self):
+        self.category = None
+        self.is_over = False
+        self.high_bet = None
+        self.answers_dict = []
 
 
