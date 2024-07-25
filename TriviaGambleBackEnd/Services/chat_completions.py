@@ -21,6 +21,8 @@ class ChatQuery:
         print(completion.choices[0].message.content[0].lower())
         return completion.choices[0].message.content[0].lower()
 
+
+    # look into 4o-mini as new model
     def query_for_answer_with_4o(self, topic, answer):
         completion = self.client.chat.completions.create(
             model="gpt-4o",

@@ -24,3 +24,11 @@ export async function postBackEndDBUpdate(value) {
     })
     console.log(resp.status)
 }
+
+export async function createNewGame() {
+    const resp = await ourServer.post('game', {
+        createGame: true
+    })
+
+    return resp.data.new_game_id;
+}
