@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLoaderData } from "react-router-dom";
+
 import { onSnapshot, doc } from "firebase/firestore";
 import { db } from "../services/firbase"
 
@@ -12,7 +13,11 @@ function Game() {
 
     const [hasStarted, setHasStarted] = useState(false)
     const [hasEnded, setHasEnded] = useState(false)
+    const [endingScore, setEndingScore] = useState(10)
+    const [winner, setWinner] = useState("")
     const [players, setPlayers] = useState([])
+    const [rounds, setRounds] = useState([])
+
 
     const gameId = useLoaderData().gameId;
 
@@ -34,6 +39,7 @@ function Game() {
 
     return (
         <>
+       
             <h1>Game: {gameId}</h1>
             {playersArray}
             

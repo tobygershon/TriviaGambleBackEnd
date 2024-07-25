@@ -24,7 +24,7 @@ def create_new_game():
 # adding players
 @app.put("/<game_id>/add_player")
 def add_player_to_game(game_id):
-# get game
+    # get game
     # add player to game object
     # check if game is full and update game object and firebase DB accordingly
          # Round 1 needs to be added

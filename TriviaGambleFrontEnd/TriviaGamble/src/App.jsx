@@ -3,9 +3,8 @@ import HomeLayout from './layouts/HomeLayout'
 import BoardLayout from './layouts/BoardLayout'
 import GameLayout from './layouts/GameLayout'
 import NotFound from "./components/NotFound"
-import Game from './components/Game'
+import Game, { loader as GameLoader} from './components/Game'
 import HomePage from "./components/HomePage"
-import { loader as GameLoader} from "./components/Game"
 
 
 function App() {
