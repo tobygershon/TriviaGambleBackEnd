@@ -1,30 +1,48 @@
 import { useState, useEffect } from "react";
 
-function Timer() {
+function Timer( { id, stopTimer, seconds, setIsEnded } ) {
 
-    const [seconds, setSeconds] = useState(5)
-    const [isEnded, setIsEnded] = useState(false)
+    if (seconds === 0) {
+        stopTimer(id)
+        setIsEnded()
+        console.log('ended')
+    } 
 
-    function startTimer() {
-        while (seconds > 0) {
-            setTimeout(() => incrementTimer(), 1000)
-            if (seconds === 0) {
-                setIsEnded(true)
-            }
-        }
-    }
+    
 
-    console.log(isEnded)
+    // console.log(isEnded)
 
-    function incrementTimer() {
-        setSeconds(prev => prev - 1)
-    }
+    // useEffect(() => {
+        
+    //     setSecond(5)
+        
+    // }, [reset])
+
+
+    // function startTimer() {
+    //     console.log('start timer')
+    //     let num = seconds
+    //     const id = setInterval(incrementTimer, 1000)
+        
+    //     function incrementTimer() {
+    //         if (num > 0) {
+    //             setSecond(prev => prev - 1)
+    //             num -= 1
+    //             console.log(num)
+    //             console.log(seconds)
+    //             if (num === 0) {
+    //                 setIsEnded(true)
+    //                 clearInterval(id)
+    //             }
+                
+    //     }
+    //     }}
+
 
     return (
         <>
-        Timer
-        <button onClick={startTimer} >start Timer</button>
-        {seconds}
+            Timer
+            {seconds}
         </>
     )
 }

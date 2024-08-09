@@ -9,4 +9,4 @@ class GameBoard:
         self.current_games_dict[game.game_id] = game
 
     def remove_game_from_current_game_dict(self, game):
-        self.games_dict.pop(game.game_id)
+        self.current_games_dict.pop(game.game_id)
