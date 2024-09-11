@@ -2,17 +2,19 @@ from Services import chat_completions as c
 # Each answer has an ordered number associated with it and the str of the answer and boolean is_correct
 
 
+def get_answer_obj_for_firestore_db(answer):
+    return {
+        "answer": answer,
+        "status": 'PENDING'
+    }
+
+
 class Answer:
 
-    def __init__(self, answer):
+    def __init__(self, answer_id, answer):
+        self.answer_id = answer_id
         self.answer = answer
         self.status = 'PENDING'
-
-    def get_answer_obj_for_firestore_db(self):
-        return {
-            "answer": self.answer,
-            "status": self.status
-        }
 
     def is_answer_correct(self):
         completion = c.ChatQuery()

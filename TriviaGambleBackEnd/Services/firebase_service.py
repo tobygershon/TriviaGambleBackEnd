@@ -1,6 +1,10 @@
 import firebase_admin
 from firebase_admin import credentials
 from firebase_admin import firestore
+from Classes.Model_Classes import game
+from Classes.Model_Classes import player
+from Classes.Model_Classes import round
+from Classes.Model_Classes import answer
 
 cred = credentials.Certificate('./firebase_service_account.json')
 
@@ -9,17 +13,11 @@ db = firestore.client()
 
 
 def create_new_game_doc_in_firestore():
-    model_game = {
-        "hasStarted": False,
-        "hasEnded": False,
-        "endingScore": 10, # is this necessary on front end/db?
-        "winner": "",
-        "players": [],
-        "rounds": []
-    }
+
+    model_game = game.get_game_obj_for_firestore_db()
 
     try:
-        update_time, game_ref = db.collection("triviaGambleTesting").add(model_game)
+        update_time, game_ref = db.collection("games").add(model_game)
         # update_time gives timestamp of creation
     except Exception:
         print("create new game in firestore failed")
@@ -28,9 +26,49 @@ def create_new_game_doc_in_firestore():
         return game_ref.id
 
 
-def update_firestore_game_field(game_id, field_to_update, updated_value):
+def create_new_player_doc_in_firestore(player_name):
+
+    model_player = player.get_player_obj_for_firestore_db(player_name)
+
     try:
-        game_ref = db.collection("games").document(game_id)
+        update_time, player_ref = db.collection("players").add(model_player)
+        # update_time gives timestamp of creation
+    except Exception:
+        print("create new player in firestore failed")
+        return None
+    else:
+        return player_ref.id
+
+def create_new_round_doc_in_firestore(category):
+
+    model_round = round.get_round_obj_for_firestore_db(category)
+
+    try:
+        update_time, round_ref = db.collection("rounds").add(model_round)
+        # update_time gives timestamp of creation
+    except Exception:
+        print("create new round in firestore failed")
+        return None
+    else:
+        return round_ref.id
+
+
+def create_new_answer_doc_in_firestore(submitted_answer):
+
+    model_answer = answer.get_answer_obj_for_firestore_db(submitted_answer)
+
+    try:
+        update_time, answer_ref = db.collection("answers").add(model_answer)
+        # update_time gives timestamp of creation
+    except Exception:
+        print("create new answer in firestore failed")
+        return None
+    else:
+        return answer_ref.id
+
+def update_firestore_field(doc_id, collection, field_to_update, updated_value):
+    try:
+        game_ref = db.collection(collection).document(doc_id)
 
         game_ref.update({field_to_update: updated_value})
     except Exception:
@@ -40,9 +78,23 @@ def update_firestore_game_field(game_id, field_to_update, updated_value):
         return True
 
 
-def update_firestore_game_array(game_id, add_or_remove_element, field_to_update, updated_value):
+def update_2_firestore_fields(doc_id, collection, field_1_to_update, updated_value_1, field_2_to_update, updated_value_2):
     try:
-        game_ref = db.collection("games").document(game_id)
+        game_ref = db.collection(collection).document(doc_id)
+
+        game_ref.update({
+            field_1_to_update: updated_value_1,
+            field_2_to_update: updated_value_2
+        })
+    except Exception:
+        print("Update field in firestore failed")
+        return False
+    else:
+        return True
+
+def update_firestore_array(doc_id, collection, add_or_remove_element, field_to_update, updated_value):
+    try:
+        game_ref = db.collection(collection).document(doc_id)
 
         if add_or_remove_element == "add":
             game_ref.update({field_to_update: firestore.ArrayUnion([updated_value])})
@@ -58,9 +110,9 @@ def update_firestore_game_array(game_id, add_or_remove_element, field_to_update,
         return True
 
 
-def increment(game_id, field_to_incremented):
+def increment(doc_id, collection, field_to_incremented):
     try:
-        game_ref = db.collection("games").document(game_id)
+        game_ref = db.collection(collection).document(doc_id)
         game_ref.update({field_to_incremented: firestore.Increment(1)})
     except Exception:
         print("increment field in firestore failed")

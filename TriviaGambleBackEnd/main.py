@@ -1,4 +1,4 @@
-from Controllers import test_controller as c
+from Controllers import controller as c
 
 
 # new_answer = answer.Answer("Imbeed")
