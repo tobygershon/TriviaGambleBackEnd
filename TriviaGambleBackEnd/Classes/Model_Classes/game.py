@@ -6,14 +6,15 @@ from Classes.Model_Classes import bet
 from Classes.Model_Classes import answer
 
 
-def get_game_obj_for_firestore_db():
+def get_game_obj_for_firestore_db(chat_id):
     return {
         "hasStarted": False,
         "hasEnded": False,
         "endingScore": 10, # is this necessary on front end/db?
         "winner": "",
         "players": [],
-        "rounds": []
+        "rounds": [],
+        "chat": chat_id
     }
 
 
@@ -88,7 +89,7 @@ class Game:
 
             # update player with isAnswering and reset isHighBet to false for next round
             high_bet_player.is_answering = True
-            f.update_2_firestore_fields(high_bet_player.player_id, "players", "isAnswering", True, "isHighBet", False)
+            f.update_firestore_field(high_bet_player.player_id, "players", "isAnswering", True)
 
         else:
             # throw error?
@@ -160,10 +161,10 @@ class Game:
         self.player_list[next_judge_index].is_judge = True
         f.update_firestore_field(self.player_list[next_judge_index].player_id, "players", "isJudge", True)
 
-        # change isAnswering to false
+        # change isAnswering to false and isHighBet to false in firestore db
         answering_player = self.get_current_round_object().high_bet.player
         answering_player.is_answering = False
-        f.update_firestore_field(answering_player.player_id, "players", "isAnswering", False)
+        f.update_2_firestore_fields(answering_player.player_id, "players", "isAnswering", False, "isHighBet", False)
 
     # Helper Methods
 

@@ -5,6 +5,7 @@ from Classes.Model_Classes import game
 from Classes.Model_Classes import player
 from Classes.Model_Classes import round
 from Classes.Model_Classes import answer
+from Classes.Model_Classes import chat
 
 cred = credentials.Certificate('./firebase_service_account.json')
 
@@ -12,9 +13,9 @@ fire_base_app = firebase_admin.initialize_app(cred)
 db = firestore.client()
 
 
-def create_new_game_doc_in_firestore():
+def create_new_game_doc_in_firestore(chat_id):
 
-    model_game = game.get_game_obj_for_firestore_db()
+    model_game = game.get_game_obj_for_firestore_db(chat_id)
 
     try:
         update_time, game_ref = db.collection("games").add(model_game)
@@ -38,6 +39,7 @@ def create_new_player_doc_in_firestore(player_name):
         return None
     else:
         return player_ref.id
+
 
 def create_new_round_doc_in_firestore(category):
 
@@ -63,6 +65,18 @@ def create_new_answer_doc_in_firestore(submitted_answer):
     except Exception:
         print("create new answer in firestore failed")
         return None
+    else:
+        return answer_ref.id
+
+
+def create_new_chat_doc_in_firestore():
+
+    model_chat = chat.get_chat_obj_for_firestore_db()
+
+    try:
+        update_time, answer_ref = db.collection("chats").add(model_chat)
+    except Exception:
+        print("create new chat in firestore failed")
     else:
         return answer_ref.id
 
