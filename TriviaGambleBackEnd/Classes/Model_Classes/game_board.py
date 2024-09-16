@@ -22,3 +22,12 @@ class GameBoard:
         else:
             print("gameId does not exist")
             return False
+
+    def get_all_unstarted_games(self):
+        unstarted_games = []
+        for game_id in self.current_games_dict:
+            game = self.get_game(game_id)
+            if not game.has_started:
+                unstarted_games.append(game_id)
+
+        return unstarted_games

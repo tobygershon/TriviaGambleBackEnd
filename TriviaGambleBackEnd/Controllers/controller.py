@@ -11,7 +11,8 @@ cors = CORS(app)
 
 new_game_board = game_board.GameBoard()  # instantiate new board
 # then create new game in firestore and retrieve id, then instantiate new Game object and add to game board
-first_game_id = f.create_new_game_doc_in_firestore('test')
+first_new_chat_doc_id = f.create_new_chat_doc_in_firestore()
+first_game_id = f.create_new_game_doc_in_firestore(first_new_chat_doc_id)
 print(first_game_id)
 first_game = game.Game(first_game_id)
 new_game_board.add_new_game_to_current_game_dict(first_game)
@@ -23,7 +24,9 @@ print(first_game.game_id)
 
 @app.get("/")
 def home_page():
-    return {"valid_game": True}
+    # return all unstarted games
+    list_of_current_unstarted_games = new_game_board.get_all_unstarted_games()
+    return {"unstarted_games": list_of_current_unstarted_games}
 
 
 @app.post("/new_game")

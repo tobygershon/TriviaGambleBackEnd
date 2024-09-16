@@ -3,5 +3,9 @@
 
 def get_chat_obj_for_firestore_db():
     return {
-        "messages": ['Start the chat...']
+        "messages": [{
+            "text":'Start the chat...',
+            "player": "",
+            "id": ""
+        }]
     }
