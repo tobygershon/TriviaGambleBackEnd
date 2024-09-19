@@ -11,7 +11,9 @@ def get_round_obj_for_firestore_db(category):
             "player": ""
         },
         "isOver": False,
-        "answers": []
+        "answers": [],
+        "wonRound": 'PENDING',
+        "startNextRound": False
     }
 
 

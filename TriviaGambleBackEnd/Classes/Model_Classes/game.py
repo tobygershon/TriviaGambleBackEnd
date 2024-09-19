@@ -10,6 +10,7 @@ def get_game_obj_for_firestore_db(chat_id):
     return {
         "hasStarted": False,
         "hasEnded": False,
+        "gamePhase": "beforeStart",
         "endingScore": 10, # is this necessary on front end/db?
         "winner": "",
         "players": [],
@@ -25,10 +26,12 @@ class Game:
         self.game_id = game_id
         self.has_started = False
         self.has_ended = False
+        self.game_phase = "beforeStart"
         self.ending_score = 10
         self.player_list = []
         self.rounds_list = []
         self.winner = None
+        self.judge_index = 0
 
     def add_player(self, player_name):
         # first create player doc in db to get player doc id back
@@ -47,13 +50,18 @@ class Game:
         # randomly shuffle player list order
         r.shuffle(self.player_list)
 
+        # update is_judge for players.  index 0 starts as judge
+        self.player_list[self.judge_index].is_judge = True
+        f.update_firestore_field(self.player_list[self.judge_index].player_id, "players", "isJudge", True)
+
         #update has_started for obj and db
         self.has_started = True
+        self.update_game_phase("gameStarting")
         f.update_firestore_field(self.game_id, "games", "hasStarted", True)
 
-        # update is_judge for players.  index 0 starts as judge
-        self.player_list[0].is_judge = True
-        f.update_firestore_field(self.player_list[0].player_id, "players", "isJudge", True)
+    def update_game_phase(self, new_phase):
+        self.game_phase = new_phase
+        f.update_firestore_field(self.game_id, "games", "gamePhase", new_phase)
 
     def add_round(self, category):
         #first create new round doc in db to get round doc id back
@@ -65,6 +73,8 @@ class Game:
 
         # add round doc ID to rounds array of game in db
         f.update_firestore_array(self.game_id, "games", "add", "rounds", new_round.round_id)
+        # update game phase to startBetting
+        self.update_game_phase("startBetting")
 
         return round_id
 
@@ -87,12 +97,16 @@ class Game:
             bet_to_add = high_bet_obj.get_bet_obj_for_firestore_db()
             f.update_2_firestore_fields(self.get_current_round_object().round_id, "rounds", "highBet", bet_to_add, "isBetting", False)
 
-            # update player with isAnswering and reset isHighBet to false for next round
+            # update player with isAnswering (resetting of isHighBet to false for next round is at end of round)
             high_bet_player.is_answering = True
             f.update_firestore_field(high_bet_player.player_id, "players", "isAnswering", True)
 
+            # update phase to endBetting
+            self.update_game_phase("endBetting")
+
         else:
             # throw error?
+            print("no high bet player")
             pass
 
     def add_answer(self, submitted_answer):
@@ -141,30 +155,33 @@ class Game:
                 self.has_ended = True
                 # update both fields in one call
                 f.update_2_firestore_fields(self.game_id, "games", "winner", self.winner.player_id, "hasEnded", True)
+                self.update_game_phase("gameEnding")
             else:
                 # tiebraker?
                 pass
-        else:
-            self.start_next_round()
 
     def start_next_round(self):
-        # change isJudge,
-        judge_index = self.get_index_of_judge()
-        next_judge_index = judge_index + 1
+        # change isJudge to false for current judge
+        self.player_list[self.judge_index].is_judge = False
+        f.update_firestore_field(self.player_list[self.judge_index].player_id, "players","isJudge", False)
 
-        self.player_list[judge_index].is_judge = False
-        f.update_firestore_field(self.player_list[judge_index].player_id, "players","isJudge", False)
+        # next increment game's judge index
+        if self.judge_index + 1 == len(self.player_list):
+            self.judge_index = 0
+        else:
+            self.judge_index += 1
 
-        if next_judge_index == len(self.player_list):
-            next_judge_index -= len(self.player_list)
-
-        self.player_list[next_judge_index].is_judge = True
-        f.update_firestore_field(self.player_list[next_judge_index].player_id, "players", "isJudge", True)
+        self.player_list[self.judge_index].is_judge = True
+        f.update_firestore_field(self.player_list[self.judge_index].player_id, "players", "isJudge", True)
 
         # change isAnswering to false and isHighBet to false in firestore db
         answering_player = self.get_current_round_object().high_bet.player
         answering_player.is_answering = False
         f.update_2_firestore_fields(answering_player.player_id, "players", "isAnswering", False, "isHighBet", False)
+
+        # change startNextRound to true in current round in firestore to trigger change of phase back to beginning
+        f.update_firestore_field(self.get_current_round_object().round_id, "rounds", "startNextRound", True)
+
 
     # Helper Methods
 
@@ -177,20 +194,20 @@ class Game:
 
     def check_if_enough_answers_pending(self):
         current_answers_list = self.get_current_round_object().answers_list
-        answers_pending = False
         count_pending_answers = 0
         count_correct_answers = self.get_count_of_correct_answers()
         current_round = self.get_current_round_object()
         high_bet = current_round.high_bet.bet
 
         for a in current_answers_list:
-            if a.status == 'PENDING':
+            if a.status in ('PENDING', 'APPEALED') :
                 count_pending_answers += 1
 
         if count_pending_answers + count_correct_answers >= high_bet:
-            answers_pending = True
+            return True
+        else:
+            return False
 
-        return answers_pending
 
     def get_current_round_object(self):
         if len(self.rounds_list) > 0:
@@ -207,15 +224,13 @@ class Game:
     #         if self.player_list[x].name == search_player.name:
     #             return x
 
-    def get_index_of_judge(self):
-        index = None
-
+    def get_index_of_next_judge(self):
         for x in range(len(self.player_list)):
             if self.player_list[x].is_judge:
-                index = x
-                break
-
-        return index
+                index_next_judge = x + 1
+                print(f'{x} is the current judge index')
+                print(f'{index_next_judge} is the returned next_judge index')
+                return index_next_judge
 
     def get_other_players(self):
         other_players_list = []
@@ -229,6 +244,8 @@ class Game:
     def update_round_over(self):
         # update round is over
         f.update_firestore_field(self.get_current_round_object().round_id, "rounds", "isOver", True)
+        #update phase
+        self.update_game_phase("endAnswering")
 
     def update_scores(self, won_round):
 
@@ -236,7 +253,9 @@ class Game:
             winning_player = self.get_current_round_object().high_bet.player
             winning_player.score += 1
             f.increment(winning_player.player_id, "players", "score")
+            f.update_firestore_field(self.get_current_round_object().round_id, "rounds", "wonRound", True)
         else:
+            f.update_firestore_field(self.get_current_round_object().round_id, "rounds", "wonRound", False)
             other_players_list = self.get_other_players()
             for p in other_players_list:
                 p.score += 1

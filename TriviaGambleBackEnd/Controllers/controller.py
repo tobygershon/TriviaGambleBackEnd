@@ -82,6 +82,20 @@ def add_player_to_game(game_id):
         return {'valid_game': False}
 
 
+#updating the game phase through back end
+@app.put("/<game_id>/phase")
+def update_phase(game_id):
+    # get game
+    game_to_update = new_game_board.current_games_dict[game_id]
+
+    if game_to_update is not None:
+        game_to_update.update_game_phase(request.json["newGamePhase"])
+
+        return {'valid_game': True}
+    else:
+        return {'valid_game': False}
+
+
 # routes for choosing category
 @app.put("/<game_id>/category")
 def add_category(game_id):
@@ -156,9 +170,16 @@ def submit_judgment_of_answer(game_id):
         # request body will need to include answer index as well as judgement
         game_to_update.update_answer_status(request.json["answer_id"], request.json["status"])
 
-        # check if round won
-        if game_to_update.check_if_round_won():
-            game_to_update.end_round(won_round=True)
+        # first, check if round won with correct answer
+        if request.json["status"] == True:
+            if game_to_update.check_if_round_won():
+                game_to_update.end_round(won_round=True)
+        else:  # any wrong or pending answers we don't do anything with them during the round
+            if request.json["waiting"]:  # in waiting for judge phase
+                if game_to_update.check_if_enough_answers_pending():
+                    pass
+                else:
+                    game_to_update.end_round(won_round=False)
 
         return {'valid_game': True}
 
@@ -182,8 +203,22 @@ def end_round(game_id):
             game_to_update.end_round(won_round=False)
 
         return {'valid_game': True}
+
     else:
         print("gameId does not exist")
+        return {'valid_game': False}
+
+
+@app.put("/<game_id>/new_round")
+def start_new_round(game_id):
+    # get game
+    game_to_update = new_game_board.current_games_dict[game_id]
+
+    if game_to_update is not None:
+        game_to_update.start_next_round()
+
+        return {'valid_game': True}
+    else:
         return {'valid_game': False}
 
 
